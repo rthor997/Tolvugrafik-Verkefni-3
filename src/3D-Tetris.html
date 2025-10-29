@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>3D Tetris</title>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background-color: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      color: white;
+    }
+
+    canvas {
+      border: 2px solid #444;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+    attribute vec4 vPosition;
+    uniform mat4 modelViewMatrix;
+    uniform mat4 projectionMatrix;
+    
+    void main() {
+        gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+    }
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 uColor;
+    
+    void main() {
+        gl_FragColor = uColor;
+    }
+</script>
+
+<script type="text/javascript" src="../common/webgl-utils.js"></script>
+<script type="text/javascript" src="../common/initShaders.js"></script>
+<script type="text/javascript" src="../common/MV.js"></script>
+<script type="text/javascript" src="3D-Tetris.js"></script>
+
+<body>
+    <canvas id="gl-canvas" width="750" height="750">
+        Your browser does not support WebGL.
+    </canvas>
+</body>
+</html>
