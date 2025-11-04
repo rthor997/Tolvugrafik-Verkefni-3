@@ -175,22 +175,37 @@ window.onload = function init() {
     } );
 
     canvas.addEventListener("mousemove", function(e){
-        if(movement) {
-    	    spinY = ( spinY + (e.clientX - origX) ) % 360;
-            spinX = ( spinX + (origY - e.clientY) ) % 360;
-            origX = e.clientX;
-            origY = e.clientY;
-        }
+        if (movement) {
+        spinY += (e.clientX - origX);
+        spinX += (origY - e.clientY);
+
+        origX = e.clientX;
+        origY = e.clientY;
+    }
     } );
     
     // Event listener for keyboard
      window.addEventListener("keydown", function(e){
          switch( e.keyCode ) {
+            case 37:    // vinstri ör
+                if (canMoveHorizontal(currentBlock, 1, 0)) {
+                    currentBlock.x += 1;
+                }
+                break;
             case 38:	// upp ör
-                zDist += 1.0;
+                if (canMoveHorizontal(currentBlock, 0, 1)) {
+                    currentBlock.z += 1;
+                }
+                break;
+            case 39:    // hægri ör
+                if (canMoveHorizontal(currentBlock, -1, 0)) {
+                    currentBlock.x -= 1;
+                }
                 break;
             case 40:	// niður ör
-                zDist -= 1.0;
+                if (canMoveHorizontal(currentBlock, 0, -1)) {
+                    currentBlock.z -= 1;
+                }
                 break;
          }
      }  );  
@@ -259,6 +274,21 @@ function canMoveDown(block) {
 
     // Ef kubbur lendir á öðrum kubbi
     if (get_board_value(block.x, newY, block.z) !== 0) return false;
+
+    return true;
+}
+
+function canMoveHorizontal(block, deltaX, deltaZ) {
+    var newX = block.x + deltaX;
+    var newZ = block.z + deltaZ;
+
+    if (newX < 0 || newX >= board_width || newZ < 0 || newZ >= board_depth) {
+        return false;
+    }
+
+    if (get_board_value(newX, block.y, newZ) != 0) {
+        return false;
+    }
 
     return true;
 }
