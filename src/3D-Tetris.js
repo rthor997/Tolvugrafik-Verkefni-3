@@ -44,6 +44,7 @@ var modelViewMatrixLoc;
 var uColorLoc;
 
 var vBuffer, cBuffer;
+var lineBuffer, vPosition;
 
 function init_board_array() {
     for (var i = 0; i < board_height; i++ ) {
@@ -134,8 +135,11 @@ window.onload = function init() {
     vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
-    
-    var vPosition = gl.getAttribLocation( program, "vPosition" );
+
+    lineBuffer = gl.createBuffer();
+
+    vPosition = gl.getAttribLocation( program, "vPosition" );
+    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
 
@@ -207,17 +211,26 @@ function render_background() {
 }
 
 function render_block(position, color) {
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
+
     var instanceMatrix = translate( 
         position[0] - (board_width - 1) / 2,
         position[1] - (board_height - 1) / 2, 
         position[2] - (board_depth - 1) / 2
     );
+    var s = scalem(0.9, 0.9, 0.9);
+    instanceMatrix = mult(instanceMatrix, s);
+
     var t = mult(modelViewMatrix, instanceMatrix);
 
     gl.uniformMatrix4fv(modelViewMatrixLoc,  false, flatten(t) );
     gl.uniform4fv(uColorLoc, flatten(color));
     gl.drawArrays( gl.TRIANGLES, 0, NumVertices );
 }
+
 
 function render_board() {
     render_background();
@@ -244,6 +257,82 @@ function set_board_value( x, y, z, new_value ) {
     board_array[y][z][x] = new_value;
 }
 
+function render_floor_grid() {
+    gl.uniform4fv(uColorLoc, flatten(vec4(0.4, 0.4, 0.4, 1.0)));
+
+    for (let x = 0; x <= board_width; x++) {
+        drawLine(
+            vec3(x - board_width / 2, -board_height / 2 + 0.01, -board_depth / 2),
+            vec3(x - board_width / 2, -board_height / 2 + 0.01, board_depth / 2)
+        );
+    }
+
+    for (let z = 0; z <= board_depth; z++) {
+        drawLine(
+            vec3(-board_width / 2, -board_height / 2 +0.01, z - board_depth / 2),
+            vec3(board_width / 2, -board_height / 2+ 0.01, z - board_depth / 2)
+        );
+    }
+}
+
+function render_left_grid() {
+    gl.uniform4fv(uColorLoc, flatten(vec4(0.4, 0.4, 0.4, 1.0)));
+
+    const offsetX = board_width / 2 - 0.01; // aðeins ofan til að forðast Z-fighting
+
+    // Lóðréttar línur eftir Y-ás
+    for (let z = 0; z <= board_depth; z++) {
+        drawLine(
+            vec3(offsetX, -board_height / 2, z - board_depth / 2),
+            vec3(offsetX, board_height / 2, z - board_depth / 2)
+        );
+    }
+
+    // Láréttar línur eftir Z-ás
+    for (let y = 0; y <= board_height; y++) {
+        drawLine(
+            vec3(offsetX, y - board_height / 2, -board_depth / 2),
+            vec3(offsetX, y - board_height / 2, board_depth / 2)
+        );
+    }
+}
+
+
+function render_back_grid() {
+    gl.uniform4fv(uColorLoc, flatten(vec4(0.4, 0.4, 0.4, 1.0)));
+
+    const offsetZ = board_depth / 2 - 0.01; 
+
+    // Lóðréttar línur eftir Y
+    for (let x = 0; x <= board_width; x++) {
+        drawLine(
+            vec3(x - board_width / 2, -board_height / 2, offsetZ),
+            vec3(x - board_width / 2, board_height / 2, offsetZ)
+        );
+    }
+
+    // Láréttar línur eftir X
+    for (let y = 0; y <= board_height; y++) {
+        drawLine(
+            vec3(-board_width / 2, y - board_height / 2, offsetZ),
+            vec3(board_width / 2, y - board_height / 2, offsetZ)
+        );
+    }
+}
+
+
+function drawLine(p1, p2) {
+    const linePoints = [p1, p2];
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(linePoints), gl.STREAM_DRAW);
+
+    gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
+
+    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
+    gl.drawArrays(gl.LINES, 0, 2);
+}
 
 
 var render = function() {
@@ -262,8 +351,15 @@ var render = function() {
     set_board_value(3, 3, 3, 4);
     set_board_value(4, 4, 4, 1);
     set_board_value(5, 5, 5, 2);
+    render_floor_grid();
+    render_back_grid();
+    render_left_grid();
+    // Endurstilla pointer á kubbana
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
     render_board();
-
+    
     requestAnimFrame(render);
 }
 
