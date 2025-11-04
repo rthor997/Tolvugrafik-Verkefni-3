@@ -46,6 +46,8 @@ var uColorLoc;
 var vBuffer, cBuffer;
 var lineBuffer, vPosition;
 
+var fallSpeed = 500;
+
 function init_board_array() {
     for (var i = 0; i < board_height; i++ ) {
         var layer_array = [];
@@ -104,6 +106,13 @@ function scale4(a, b, c) {
 window.onload = function init() {
     // game init
     init_board_array();
+
+    currentBlock = {
+        x: Math.floor(board_width / 2),
+        y: board_height - 1,
+        z: Math.floor(board_depth / 2),
+        color: 1
+    }
 
     // webGL init
     canvas = document.getElementById( "gl-canvas" );
@@ -197,6 +206,17 @@ window.onload = function init() {
        
   
     render();
+
+    setInterval(function(){
+        if (!moveDown(currentBlock)) {
+            currentBlock = {
+                x: Math.floor(board_width / 2),
+                y: board_height - 1,
+                z: Math.floor(board_depth / 2),
+                color: Math.floor(Math.random()*4)+1
+            };
+        }
+    }, 500); // hvert 500 ms
 }
 
 
@@ -230,6 +250,30 @@ function render_block(position, color) {
     gl.uniform4fv(uColorLoc, flatten(color));
     gl.drawArrays( gl.TRIANGLES, 0, NumVertices );
 }
+
+function canMoveDown(block) {
+    var newY = block.y - 1;
+
+    // Ef við erum komin á botn
+    if (newY < 0) return false;
+
+    // Ef kubbur lendir á öðrum kubbi
+    if (get_board_value(block.x, newY, block.z) !== 0) return false;
+
+    return true;
+}
+
+function moveDown(block) {
+    if (canMoveDown(block)) {
+        block.y -= 1;
+        return true;
+    } else {
+        // Set kubbinn fastan í board_array
+        set_board_value(block.x, block.y, block.z, block.color);
+        return false;
+    }
+}
+
 
 
 function render_board() {
@@ -359,7 +403,11 @@ var render = function() {
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
     render_board();
-    
+
+
+    // Render fallandi kubb
+    render_block(vec3(currentBlock.x, currentBlock.y, currentBlock.z), color_table[currentBlock.color-1]);
+
     requestAnimFrame(render);
 }
 
