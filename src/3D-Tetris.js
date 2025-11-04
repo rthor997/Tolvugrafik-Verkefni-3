@@ -109,8 +109,9 @@ window.onload = function init() {
 
     currentBlock = {
         x: Math.floor(board_width / 2),
-        y: board_height - 1,
+        y: board_height - 2,
         z: Math.floor(board_depth / 2),
+        areaArray: createLinePiece(),
         color: 1
     }
 
@@ -228,6 +229,7 @@ window.onload = function init() {
                 x: Math.floor(board_width / 2),
                 y: board_height - 1,
                 z: Math.floor(board_depth / 2),
+                areaArray: createLinePiece(),
                 color: Math.floor(Math.random()*4)+1
             };
         }
@@ -244,6 +246,82 @@ function render_background() {
     gl.uniform4fv(uColorLoc, flatten(vec4(0.2, 0.2, 0.2, 1.0)));
     gl.drawArrays( gl.TRIANGLES, 0, NumVertices );
 }
+
+function createLinePiece() {
+    var newPiece = [
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ]
+    ];
+    return newPiece;
+}
+
+function rotatePieceX(shape, clockwise = true) {
+    var newShape = [];
+    for (var y = 0; y < 3; y++) {
+        newShape[y] = [];
+        for (var z = 0; z < 3; z++) {
+            newShape[y][z] = [];
+            for (var x = 0; x < 3; x++) {
+                if (clockwise) {
+                    newShape[y][z][x] = shape[2 - z][y][x];
+                } else {
+                    newShape[y][z][x] = shape[z][y][2 - x];
+                }
+            }
+        }
+    }
+    return newShape;
+}
+
+function rotatePieceY(shape, clockwise = true) {
+    var newShape = [];
+    for (var y = 0; y < 3; y++) {
+        newShape[y] = [];
+        for (var z = 0; z < 3; z++) {
+            newShape[y][z] = [];
+            for (var x = 0; x < 3; x++) {
+                if (clockwise) {
+                    newShape[y][z][x] = shape[y][2 - x][z];
+                } else {
+                    newShape[y][z][x] = shape[y][x][2 - z];
+                }
+            }
+        }
+    }
+    return newShape;
+}
+
+function rotatePieceZ(shape, clockwise = true) {
+    var newShape = [];
+    for (var y = 0; y < 3; y++) {
+        newShape[y] = [];
+        for (var z = 0; z < 3; z++) {
+            newShape[y][z] = [];
+            for (var x = 0; x < 3; x++) {
+                if (clockwise) {
+                    newShape[y][z][x] = shape[2 - y][x][z];
+                } else {
+                    newShape[y][z][x] = shape[y][2 - x][z];
+                }
+            }
+        }
+    }
+    return newShape;
+}
+
 
 function render_block(position, color) {
     
@@ -267,27 +345,54 @@ function render_block(position, color) {
 }
 
 function canMoveDown(block) {
-    var newY = block.y - 1;
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (block.areaArray[y][z][x] == 0) {
+                    continue;
+                }
 
-    // Ef við erum komin á botn
-    if (newY < 0) return false;
+                var partX = block.x + x - 1;
+                var partY = block.y + y - 1;
+                var partZ = block.z + z - 1;
 
-    // Ef kubbur lendir á öðrum kubbi
-    if (get_board_value(block.x, newY, block.z) !== 0) return false;
+                var newY = partY - 1;
+
+                // Ef við erum komin á botn
+                if (newY < 0) return false;
+
+                // Ef kubbur lendir á öðrum kubbi
+                if (get_board_value(partX, newY, partZ) !== 0) return false;
+            }
+        }
+    }
 
     return true;
 }
 
 function canMoveHorizontal(block, deltaX, deltaZ) {
-    var newX = block.x + deltaX;
-    var newZ = block.z + deltaZ;
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (block.areaArray[y][z][x] == 0) {
+                    continue;
+                }
+                var partX = block.x + x - 1;
+                var partY = block.y + y - 1;
+                var partZ = block.z + z - 1;
 
-    if (newX < 0 || newX >= board_width || newZ < 0 || newZ >= board_depth) {
-        return false;
-    }
+                var newX = partX + deltaX;
+                var newZ = partZ + deltaZ;
 
-    if (get_board_value(newX, block.y, newZ) != 0) {
-        return false;
+                if (newX < 0 || newX >= board_width || newZ < 0 || newZ >= board_depth) {
+                    return false;
+                }
+            
+                if (get_board_value(newX, partY, newZ) != 0) {
+                    return false;
+                }
+            }
+        }
     }
 
     return true;
@@ -297,10 +402,42 @@ function moveDown(block) {
     if (canMoveDown(block)) {
         block.y -= 1;
         return true;
-    } else {
-        // Set kubbinn fastan í board_array
-        set_board_value(block.x, block.y, block.z, block.color);
-        return false;
+    }
+    else {
+        for (var y = 0; y < 3; y++) {
+            for (var z = 0; z < 3; z++) {
+                for (var x = 0; x < 3; x++) {
+                    if (block.areaArray[y][z][x] == 0) {
+                        continue;
+                    }
+                
+                    var partX = block.x + x - 1;
+                    var partY = block.y + y - 1;
+                    var partZ = block.z + z - 1;
+                
+                    // Set kubbinn fastan í board_array
+                    set_board_value(partX, partY, partZ, block.color);
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function renderFallingBlock() {
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (currentBlock.areaArray[y][z][x] == 0) {
+                    continue;
+                }
+                var partX = currentBlock.x + x - 1;
+                var partY = currentBlock.y + y - 1;
+                var partZ = currentBlock.z + z - 1;
+
+                render_block(vec3(partX, partY, partZ), color_table[currentBlock.color-1]);
+            }
+        }
     }
 }
 
@@ -436,7 +573,7 @@ var render = function() {
 
 
     // Render fallandi kubb
-    render_block(vec3(currentBlock.x, currentBlock.y, currentBlock.z), color_table[currentBlock.color-1]);
+    renderFallingBlock();
 
     requestAnimFrame(render);
 }
