@@ -208,6 +208,42 @@ window.onload = function init() {
                     currentBlock.z -= 1;
                 }
                 break;
+            case 65:    // a
+                newArea = rotatePieceX(currentBlock.areaArray, false);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 90:    // z
+                newArea = rotatePieceX(currentBlock.areaArray, true);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 83:    // s
+                newArea = rotatePieceY(currentBlock.areaArray, false);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 88:    // x
+                newArea = rotatePieceY(currentBlock.areaArray, true);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 68:    // d
+                newArea = rotatePieceZ(currentBlock.areaArray, false);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 67:    // c
+                newArea = rotatePieceZ(currentBlock.areaArray, true);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
          }
      }  );  
 
@@ -225,11 +261,12 @@ window.onload = function init() {
 
     setInterval(function(){
         if (!moveDown(currentBlock)) {
+
             currentBlock = {
                 x: Math.floor(board_width / 2),
                 y: board_height - 1,
                 z: Math.floor(board_depth / 2),
-                areaArray: createLinePiece(),
+                areaArray: Math.random() < 0.5 ? createLinePiece() : createStairPiece(),
                 color: Math.floor(Math.random()*4)+1
             };
         }
@@ -268,58 +305,99 @@ function createLinePiece() {
     return newPiece;
 }
 
-function rotatePieceX(shape, clockwise = true) {
-    var newShape = [];
-    for (var y = 0; y < 3; y++) {
-        newShape[y] = [];
-        for (var z = 0; z < 3; z++) {
-            newShape[y][z] = [];
-            for (var x = 0; x < 3; x++) {
-                if (clockwise) {
-                    newShape[y][z][x] = shape[2 - z][y][x];
-                } else {
-                    newShape[y][z][x] = shape[z][y][2 - x];
-                }
-            }
-        }
-    }
-    return newShape;
+function createStairPiece() {
+    var newPiece = [
+        [
+            [0, 0, 0],
+            [0, 0, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 1], 
+            [0, 0, 0]
+        ]
+    ];
+    return newPiece;
 }
 
-function rotatePieceY(shape, clockwise = true) {
-    var newShape = [];
+function rotatePieceX(area, clockwise = true) {
+    var newArea = [];
     for (var y = 0; y < 3; y++) {
-        newShape[y] = [];
+        newArea[y] = [];
         for (var z = 0; z < 3; z++) {
-            newShape[y][z] = [];
+            newArea[y][z] = [];
             for (var x = 0; x < 3; x++) {
                 if (clockwise) {
-                    newShape[y][z][x] = shape[y][2 - x][z];
+                    newArea[y][z][x] = area[z][2 - y][x];
                 } else {
-                    newShape[y][z][x] = shape[y][x][2 - z];
+                    newArea[y][z][x] = area[2 - z][y][x];
                 }
             }
         }
     }
-    return newShape;
+    return newArea;
 }
 
-function rotatePieceZ(shape, clockwise = true) {
-    var newShape = [];
+function rotatePieceY(area, clockwise = true) {
+    var newArea = [];
     for (var y = 0; y < 3; y++) {
-        newShape[y] = [];
+        newArea[y] = [];
         for (var z = 0; z < 3; z++) {
-            newShape[y][z] = [];
+            newArea[y][z] = [];
             for (var x = 0; x < 3; x++) {
                 if (clockwise) {
-                    newShape[y][z][x] = shape[2 - y][x][z];
+                    newArea[y][z][x] = area[y][2 - x][z];
                 } else {
-                    newShape[y][z][x] = shape[y][2 - x][z];
+                    newArea[y][z][x] = area[y][x][2 - z];
                 }
             }
         }
     }
-    return newShape;
+    return newArea;
+}
+
+function rotatePieceZ(area, clockwise = true) {
+    var newArea = [];
+    for (var y = 0; y < 3; y++) {
+        newArea[y] = [];
+        for (var z = 0; z < 3; z++) {
+            newArea[y][z] = [];
+            for (var x = 0; x < 3; x++) {
+                if (clockwise) {
+                    newArea[y][z][x] = area[2 - x][z][y];
+                } else {
+                    newArea[y][z][x] = area[x][z][2 - y];
+                }
+            }
+        }
+    }
+    return newArea;
+}
+
+function checkPieceValid(block, newArea) {
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (newArea[y][z][x] == 0) {
+                    continue;
+                }
+
+                var partX = block.x + x - 1;
+                var partY = block.y + y - 1;
+                var partZ = block.z + z - 1;
+
+                if (get_board_value(partX, partY, partZ) !== 0) return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 
