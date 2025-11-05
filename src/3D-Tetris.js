@@ -403,6 +403,42 @@ function checkPieceValid(block, newArea) {
     return true;
 }
 
+function isLayerFull(y) {
+    for (let x = 0; x < board_width; x++) {
+        for (let z = 0; z < board_depth; z++){
+            if (board_array[y][z][x] == 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function collapseLayer(y) {
+    for (let yy = y; yy < board_height - 1; yy++) {
+        for (let z = 0; z < board_depth; z++) {
+            for (let x = 0; x < board_width; x++) {
+                board_array[yy][z][x] = board_array[yy + 1][z][x];
+            }
+        }
+    }
+    // hreinsa eftsa lagið
+    for(let z = 0; z < board_depth; z++) {
+        for (let x = 0; x < board_width; x++) {
+            board_array[board_height - 1][z][x] = 0;
+        }
+    }
+}
+
+function checkForClears() {
+    for (let y = 0; y < board_height; y++) {
+        if (isLayerFull(y)) {
+            collapseLayer(y);
+            y--;
+        }
+    }
+}
+
 
 function render_block(position, color) {
     
@@ -502,6 +538,7 @@ function moveDown(block) {
             }
         }
     }
+    checkForClears();
     return false;
 }
 
