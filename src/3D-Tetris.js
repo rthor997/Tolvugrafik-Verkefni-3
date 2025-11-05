@@ -10,6 +10,7 @@ var zDist = -25.0;
 
 var points = [];
 var colors = [];
+let score = 0;
 
 var board_height = 20;
 var board_width = 6;
@@ -431,12 +432,26 @@ function collapseLayer(y) {
 }
 
 function checkForClears() {
+    let clearedLayers = 0; 
+
     for (let y = 0; y < board_height; y++) {
         if (isLayerFull(y)) {
             collapseLayer(y);
+            clearedLayers++;
             y--;
         }
     }
+
+    if (clearedLayers === 0) return;
+
+    const comboScores = [0, 100, 300, 600, 1000];
+
+    score += comboScores[clearedLayers];
+    updateScoreDisplay();
+}
+
+function updateScoreDisplay() {
+    document.getElementById("scoreDisplay").innerText = "Stig: " + score;
 }
 
 
