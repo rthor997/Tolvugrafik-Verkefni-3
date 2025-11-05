@@ -244,6 +244,9 @@ window.onload = function init() {
                 currentBlock.areaArray = newArea;
                 }
                 break;
+            case 32: // spacebar
+                dropBlock(currentBlock)
+                break;
          }
      }  );  
 
@@ -502,6 +505,18 @@ function moveDown(block) {
     return false;
 }
 
+function dropBlock(block) {
+    while (moveDown(block)) {
+    }
+    currentBlock = {
+        x: Math.floor(board_width / 2),
+        y: board_height - 1,
+        z: Math.floor(board_depth / 2),
+        areaArray: Math.random() < 0.5 ? createLinePiece() : createStairPiece(),
+        color: Math.floor(Math.random()*4)+1
+    };
+}
+
 function renderFallingBlock() {
     for (var y = 0; y < 3; y++) {
         for (var z = 0; z < 3; z++) {
@@ -634,12 +649,7 @@ var render = function() {
     mv = mult( mv, rotateY( spinY ) );
     modelViewMatrix = mv;
 
-    set_board_value(0, 0, 0, 1);
-    set_board_value(1, 1, 1, 2);
-    set_board_value(2, 2, 2, 3);
-    set_board_value(3, 3, 3, 4);
-    set_board_value(4, 4, 4, 1);
-    set_board_value(5, 5, 5, 2);
+
     render_floor_grid();
     render_back_grid();
     render_left_grid();
