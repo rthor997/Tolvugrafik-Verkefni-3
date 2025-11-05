@@ -109,8 +109,9 @@ window.onload = function init() {
 
     currentBlock = {
         x: Math.floor(board_width / 2),
-        y: board_height - 1,
+        y: board_height - 2,
         z: Math.floor(board_depth / 2),
+        areaArray: createLinePiece(),
         color: 1
     }
 
@@ -175,22 +176,73 @@ window.onload = function init() {
     } );
 
     canvas.addEventListener("mousemove", function(e){
-        if(movement) {
-    	    spinY = ( spinY + (e.clientX - origX) ) % 360;
-            spinX = ( spinX + (origY - e.clientY) ) % 360;
-            origX = e.clientX;
-            origY = e.clientY;
-        }
+        if (movement) {
+        spinY += (e.clientX - origX);
+        spinX += (origY - e.clientY);
+
+        origX = e.clientX;
+        origY = e.clientY;
+    }
     } );
     
     // Event listener for keyboard
      window.addEventListener("keydown", function(e){
          switch( e.keyCode ) {
+            case 37:    // vinstri ör
+                if (canMoveHorizontal(currentBlock, 1, 0)) {
+                    currentBlock.x += 1;
+                }
+                break;
             case 38:	// upp ör
-                zDist += 1.0;
+                if (canMoveHorizontal(currentBlock, 0, 1)) {
+                    currentBlock.z += 1;
+                }
+                break;
+            case 39:    // hægri ör
+                if (canMoveHorizontal(currentBlock, -1, 0)) {
+                    currentBlock.x -= 1;
+                }
                 break;
             case 40:	// niður ör
-                zDist -= 1.0;
+                if (canMoveHorizontal(currentBlock, 0, -1)) {
+                    currentBlock.z -= 1;
+                }
+                break;
+            case 65:    // a
+                newArea = rotatePieceX(currentBlock.areaArray, false);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 90:    // z
+                newArea = rotatePieceX(currentBlock.areaArray, true);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 83:    // s
+                newArea = rotatePieceY(currentBlock.areaArray, false);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 88:    // x
+                newArea = rotatePieceY(currentBlock.areaArray, true);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 68:    // d
+                newArea = rotatePieceZ(currentBlock.areaArray, false);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
+                break;
+            case 67:    // c
+                newArea = rotatePieceZ(currentBlock.areaArray, true);
+                if (checkPieceValid(currentBlock, newArea)) {
+                currentBlock.areaArray = newArea;
+                }
                 break;
          }
      }  );  
@@ -209,10 +261,12 @@ window.onload = function init() {
 
     setInterval(function(){
         if (!moveDown(currentBlock)) {
+
             currentBlock = {
                 x: Math.floor(board_width / 2),
                 y: board_height - 1,
                 z: Math.floor(board_depth / 2),
+                areaArray: Math.random() < 0.5 ? createLinePiece() : createStairPiece(),
                 color: Math.floor(Math.random()*4)+1
             };
         }
@@ -229,6 +283,123 @@ function render_background() {
     gl.uniform4fv(uColorLoc, flatten(vec4(0.2, 0.2, 0.2, 1.0)));
     gl.drawArrays( gl.TRIANGLES, 0, NumVertices );
 }
+
+function createLinePiece() {
+    var newPiece = [
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ]
+    ];
+    return newPiece;
+}
+
+function createStairPiece() {
+    var newPiece = [
+        [
+            [0, 0, 0],
+            [0, 0, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 0], 
+            [0, 0, 0]
+        ],
+        [
+            [0, 0, 0],
+            [0, 1, 1], 
+            [0, 0, 0]
+        ]
+    ];
+    return newPiece;
+}
+
+function rotatePieceX(area, clockwise = true) {
+    var newArea = [];
+    for (var y = 0; y < 3; y++) {
+        newArea[y] = [];
+        for (var z = 0; z < 3; z++) {
+            newArea[y][z] = [];
+            for (var x = 0; x < 3; x++) {
+                if (clockwise) {
+                    newArea[y][z][x] = area[z][2 - y][x];
+                } else {
+                    newArea[y][z][x] = area[2 - z][y][x];
+                }
+            }
+        }
+    }
+    return newArea;
+}
+
+function rotatePieceY(area, clockwise = true) {
+    var newArea = [];
+    for (var y = 0; y < 3; y++) {
+        newArea[y] = [];
+        for (var z = 0; z < 3; z++) {
+            newArea[y][z] = [];
+            for (var x = 0; x < 3; x++) {
+                if (clockwise) {
+                    newArea[y][z][x] = area[y][2 - x][z];
+                } else {
+                    newArea[y][z][x] = area[y][x][2 - z];
+                }
+            }
+        }
+    }
+    return newArea;
+}
+
+function rotatePieceZ(area, clockwise = true) {
+    var newArea = [];
+    for (var y = 0; y < 3; y++) {
+        newArea[y] = [];
+        for (var z = 0; z < 3; z++) {
+            newArea[y][z] = [];
+            for (var x = 0; x < 3; x++) {
+                if (clockwise) {
+                    newArea[y][z][x] = area[2 - x][z][y];
+                } else {
+                    newArea[y][z][x] = area[x][z][2 - y];
+                }
+            }
+        }
+    }
+    return newArea;
+}
+
+function checkPieceValid(block, newArea) {
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (newArea[y][z][x] == 0) {
+                    continue;
+                }
+
+                var partX = block.x + x - 1;
+                var partY = block.y + y - 1;
+                var partZ = block.z + z - 1;
+
+                if (get_board_value(partX, partY, partZ) !== 0) return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 
 function render_block(position, color) {
     
@@ -252,13 +423,55 @@ function render_block(position, color) {
 }
 
 function canMoveDown(block) {
-    var newY = block.y - 1;
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (block.areaArray[y][z][x] == 0) {
+                    continue;
+                }
 
-    // Ef við erum komin á botn
-    if (newY < 0) return false;
+                var partX = block.x + x - 1;
+                var partY = block.y + y - 1;
+                var partZ = block.z + z - 1;
 
-    // Ef kubbur lendir á öðrum kubbi
-    if (get_board_value(block.x, newY, block.z) !== 0) return false;
+                var newY = partY - 1;
+
+                // Ef við erum komin á botn
+                if (newY < 0) return false;
+
+                // Ef kubbur lendir á öðrum kubbi
+                if (get_board_value(partX, newY, partZ) !== 0) return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function canMoveHorizontal(block, deltaX, deltaZ) {
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (block.areaArray[y][z][x] == 0) {
+                    continue;
+                }
+                var partX = block.x + x - 1;
+                var partY = block.y + y - 1;
+                var partZ = block.z + z - 1;
+
+                var newX = partX + deltaX;
+                var newZ = partZ + deltaZ;
+
+                if (newX < 0 || newX >= board_width || newZ < 0 || newZ >= board_depth) {
+                    return false;
+                }
+            
+                if (get_board_value(newX, partY, newZ) != 0) {
+                    return false;
+                }
+            }
+        }
+    }
 
     return true;
 }
@@ -267,10 +480,42 @@ function moveDown(block) {
     if (canMoveDown(block)) {
         block.y -= 1;
         return true;
-    } else {
-        // Set kubbinn fastan í board_array
-        set_board_value(block.x, block.y, block.z, block.color);
-        return false;
+    }
+    else {
+        for (var y = 0; y < 3; y++) {
+            for (var z = 0; z < 3; z++) {
+                for (var x = 0; x < 3; x++) {
+                    if (block.areaArray[y][z][x] == 0) {
+                        continue;
+                    }
+                
+                    var partX = block.x + x - 1;
+                    var partY = block.y + y - 1;
+                    var partZ = block.z + z - 1;
+                
+                    // Set kubbinn fastan í board_array
+                    set_board_value(partX, partY, partZ, block.color);
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function renderFallingBlock() {
+    for (var y = 0; y < 3; y++) {
+        for (var z = 0; z < 3; z++) {
+            for (var x = 0; x < 3; x++) {
+                if (currentBlock.areaArray[y][z][x] == 0) {
+                    continue;
+                }
+                var partX = currentBlock.x + x - 1;
+                var partY = currentBlock.y + y - 1;
+                var partZ = currentBlock.z + z - 1;
+
+                render_block(vec3(partX, partY, partZ), color_table[currentBlock.color-1]);
+            }
+        }
     }
 }
 
@@ -406,7 +651,7 @@ var render = function() {
 
 
     // Render fallandi kubb
-    render_block(vec3(currentBlock.x, currentBlock.y, currentBlock.z), color_table[currentBlock.color-1]);
+    renderFallingBlock();
 
     requestAnimFrame(render);
 }
