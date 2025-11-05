@@ -10,8 +10,9 @@
       margin: 0;
       background-color: #111;
       display: flex;
+      flex-direction: row;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       font-family: sans-serif;
       color: white;
     }
@@ -19,7 +20,14 @@
     canvas {
       border: 2px solid #444;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+      margin-right: 20px;
     }
+
+    #scoreDisplay {
+      font-size: 24px;
+      margin-top: 20px;
+    }
+    
   </style>
 </head>
 
@@ -52,5 +60,6 @@
     <canvas id="gl-canvas" width="750" height="750">
         Your browser does not support WebGL.
     </canvas>
+    <div id="scoreDisplay">Stig: 0</div>
 </body>
 </html>

@@ -10,6 +10,7 @@ var zDist = -25.0;
 
 var points = [];
 var colors = [];
+let score = 0;
 
 var board_height = 20;
 var board_width = 6;
@@ -244,6 +245,9 @@ window.onload = function init() {
                 currentBlock.areaArray = newArea;
                 }
                 break;
+            case 32: // spacebar
+                dropBlock(currentBlock)
+                break;
          }
      }  );  
 
@@ -400,6 +404,56 @@ function checkPieceValid(block, newArea) {
     return true;
 }
 
+function isLayerFull(y) {
+    for (let x = 0; x < board_width; x++) {
+        for (let z = 0; z < board_depth; z++){
+            if (board_array[y][z][x] == 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function collapseLayer(y) {
+    for (let yy = y; yy < board_height - 1; yy++) {
+        for (let z = 0; z < board_depth; z++) {
+            for (let x = 0; x < board_width; x++) {
+                board_array[yy][z][x] = board_array[yy + 1][z][x];
+            }
+        }
+    }
+    // hreinsa eftsa lagið
+    for(let z = 0; z < board_depth; z++) {
+        for (let x = 0; x < board_width; x++) {
+            board_array[board_height - 1][z][x] = 0;
+        }
+    }
+}
+
+function checkForClears() {
+    let clearedLayers = 0; 
+
+    for (let y = 0; y < board_height; y++) {
+        if (isLayerFull(y)) {
+            collapseLayer(y);
+            clearedLayers++;
+            y--;
+        }
+    }
+
+    if (clearedLayers === 0) return;
+
+    const comboScores = [0, 100, 300, 600, 1000];
+
+    score += comboScores[clearedLayers];
+    updateScoreDisplay();
+}
+
+function updateScoreDisplay() {
+    document.getElementById("scoreDisplay").innerText = "Stig: " + score;
+}
+
 
 function render_block(position, color) {
     
@@ -499,7 +553,20 @@ function moveDown(block) {
             }
         }
     }
+    checkForClears();
     return false;
+}
+
+function dropBlock(block) {
+    while (moveDown(block)) {
+    }
+    currentBlock = {
+        x: Math.floor(board_width / 2),
+        y: board_height - 1,
+        z: Math.floor(board_depth / 2),
+        areaArray: Math.random() < 0.5 ? createLinePiece() : createStairPiece(),
+        color: Math.floor(Math.random()*4)+1
+    };
 }
 
 function renderFallingBlock() {
@@ -634,12 +701,7 @@ var render = function() {
     mv = mult( mv, rotateY( spinY ) );
     modelViewMatrix = mv;
 
-    set_board_value(0, 0, 0, 1);
-    set_board_value(1, 1, 1, 2);
-    set_board_value(2, 2, 2, 3);
-    set_board_value(3, 3, 3, 4);
-    set_board_value(4, 4, 4, 1);
-    set_board_value(5, 5, 5, 2);
+
     render_floor_grid();
     render_back_grid();
     render_left_grid();
