@@ -23,9 +23,21 @@
       margin-right: 20px;
     }
 
-    #scoreDisplay {
+    #score-text {
       font-size: 24px;
-      margin-top: 20px;
+    }
+
+    #game-over-text {
+      font-size: 24px;
+      display: none;
+    }
+
+    #display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
     }
     
   </style>
@@ -60,6 +72,10 @@
     <canvas id="gl-canvas" width="750" height="750">
         Your browser does not support WebGL.
     </canvas>
-    <div id="scoreDisplay">Stig: 0</div>
+
+    <div id="display">
+      <p id="game-over-text">Game Over!</p>
+      <p id="score-text">Stig: 0</p>
+    </div>
 </body>
 </html>
