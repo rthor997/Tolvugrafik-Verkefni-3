@@ -49,6 +49,8 @@ var lineBuffer, vPosition;
 
 var fallSpeed = 500;
 
+var gameLoop;
+
 function init_board_array() {
     for (var i = 0; i < board_height; i++ ) {
         var layer_array = [];
@@ -263,7 +265,7 @@ window.onload = function init() {
   
     render();
 
-    setInterval(function(){
+    gameLoop = setInterval(function(){
         if (!moveDown(currentBlock)) {
 
             currentBlock = {
@@ -546,6 +548,10 @@ function moveDown(block) {
                     var partX = block.x + x - 1;
                     var partY = block.y + y - 1;
                     var partZ = block.z + z - 1;
+
+                    if (partY > 16) {
+                        gameOver();
+                    }
                 
                     // Set kubbinn fastan í board_array
                     set_board_value(partX, partY, partZ, block.color);
@@ -688,6 +694,16 @@ function drawLine(p1, p2) {
 
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.drawArrays(gl.LINES, 0, 2);
+}
+
+function gameOver() {
+    clearInterval(gameLoop);
+
+    var canvas = document.getElementById("gl-canvas");
+    canvas.style.display = "none";
+
+    var gameOverText = document.getElementById("game-over-text");
+    gameOverText.style.display = "inline";
 }
 
 
